@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Task;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Route;
 
@@ -14,27 +16,13 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-class Task
-{
-  public function __construct(
-    public int $id,
-    public string $title,
-    public string $description,
-    public ?string $long_description,
-    public bool $completed,
-    public string $created_at,
-    public string $updated_at
-  ) {
-  }
-}
-
 Route::get('/', function () {
     return redirect()->route('tasks.index');
 });
 
 Route::get('/tasks', function () {
     return view('index', [
-        'tasks' => \App\Models\Task::latest()->get()
+        'tasks' => Task::latest()->get()
     ]);
 })->name('tasks.index');
 
@@ -42,19 +30,25 @@ Route::view('/tasks/create', 'create')->name('tasks.create');
 
 Route::get('/tasks/{id}', function ($id) {
     return view('show', [
-        'task' => \App\Models\Task::findOrFail($id)
+        'task' => Task::findOrFail($id)
     ]);
 })->name('tasks.show');
 
-Route::post('/tasks', function () {
-    $task = new \App\Models\Task();
-    $task->title = request('title');
-    $task->description = request('description');
-    $task->long_description = request('long_description');
-    $task->completed = request('completed') === 'on';
+Route::post('/tasks', function (Request $request) {
+    $data = $request->validate([
+        'title' => 'required|max:255',
+        'description' => 'required',
+        'long_description' => 'nullable'
+    ]);
+
+    $task = new Task();
+    $task->title = $data('title');
+    $task->description = $data('description');
+    $task->long_description = $data('long_description');
+    $task->completed = $data('completed') === 'on';
     $task->save();
 
-    return redirect()->route('tasks.index');
+    return redirect()->route('tasks.show', ['id' => $task->id]);
 })->name('tasks.store');
 
 Route::fallback(function() {
