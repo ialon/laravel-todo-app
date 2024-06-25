@@ -38,23 +38,24 @@ Route::get('/tasks', function () {
     ]);
 })->name('tasks.index');
 
+Route::view('/tasks/create', 'create')->name('tasks.create');
+
 Route::get('/tasks/{id}', function ($id) {
     return view('show', [
         'task' => \App\Models\Task::findOrFail($id)
     ]);
 })->name('tasks.show');
 
-// Route::get('/hello', function() {
-//     return 'Hello World';
-// })->name('hello');
+Route::post('/tasks', function () {
+    $task = new \App\Models\Task();
+    $task->title = request('title');
+    $task->description = request('description');
+    $task->long_description = request('long_description');
+    $task->completed = request('completed') === 'on';
+    $task->save();
 
-// Route::get('/hallo', function() {
-//     return redirect()->route('hello');
-// });
-
-// Route::get('/greet/{name}', function($name) {
-//     return 'Hello ' . $name;
-// });
+    return redirect()->route('tasks.index');
+})->name('tasks.store');
 
 Route::fallback(function() {
     return '404 Not Found';
